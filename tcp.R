@@ -6,12 +6,16 @@ library(ggplot2)
 dir <- "~/universidad/analisis/"
 setwd(dir)
 exportPlots <- TRUE
+plotsRecord <- list()
 
 # "not in" operator
 '%!in%' <- function(x,y)!('%in%'(x,y))
 
 # Plot nodes
-plotNodes <- function(nodesToPlot, dist=NULL, distance_value=Inf) {
+plotNodes <- function(route, nodes, distanceValue=Inf, filename="plot.png") {
+  # Create new nodes object order by route
+  nodesToPlot <- orderRoute(route=route, nodes=nodes)
+  
   # Create plot
   plot <- ggplot(nodesToPlot, aes(x=V1, y=V2, label=index))
   # Plot route points
@@ -19,13 +23,9 @@ plotNodes <- function(nodesToPlot, dist=NULL, distance_value=Inf) {
   # Plot route lines
   plot <- plot + geom_segment(aes(xend=c(tail(V1, n=-1), NA), yend=c(tail(V2, n=-1), NA)), na.rm = TRUE)
   # Add distance of the route
-  plot <- plot + ggtitle(paste("Distance:", distance_value, sep=" "))
-  
-  # Save plot to file
-  if (exportPlots) {
-    filename <- format(Sys.time(), "%H-%M-%OS3.png")
-    ggsave(filename)
-  }
+  plot <- plot + ggtitle(paste("Distance:", distanceValue, sep=" "))
+
+  ggsave(filename)
   
   # Return plot
   return(plot)
@@ -45,7 +45,6 @@ printResult <- function(resultInfo, stime, etime) {
   print(paste("Running time:", (etime - stime), sep=" "))
   print(paste("Distance:", result$distance, sep=" "))
   print(paste("Route:", paste(result$route, collapse=" -> "), sep=" "))
-  result$plot
 }
 
 # Order route
@@ -77,15 +76,19 @@ findNearest <- function(nodes, dist) {
   route <- c(route, as.numeric(rownames(nodes)[1]))
   
   # Get distance
-  distance_value <- routeDistance(dist, route)
-  
-  # Create new nodes object order by route
-  orderedNodes <- orderRoute(route=route, nodes=nodes)
+  distanceValue <- routeDistance(dist, route)
   
   # Plot
-  plot <- plotNodes(nodesToPlot=orderedNodes, dist=dist, distance_value=distance_value)
-  
-  return(list(distance=distance_value, route=route, plot=plot))
+  if (exportPlots) {
+    plotsRecord <<- append(plotsRecord, list(list(
+      route=route,
+      nodes=nodes,
+      distanceValue=distanceValue,
+      filename=format(Sys.time(), "%H-%M-%OS3.png")
+    )), after=0)
+  }
+
+  return(list(distance=distanceValue, route=route, plot=plot))
 }
 
 swap <- function(route, i, j) {
@@ -123,9 +126,15 @@ optimize <- function(nodes, dist, actualRoute) {
           bestRoute <- route
           
           # Plot
-          orderedNodes <- orderRoute(route=bestRoute, nodes=nodes)
-          plot <- plotNodes(nodesToPlot=orderedNodes, dist=dist, distance_value=minDistance)
-          breakLoop <- T
+          if (exportPlots) {
+            plotsRecord <<- append(plotsRecord, list(list(
+              route=bestRoute,
+              nodes=nodes,
+              distanceValue=minDistance,
+              filename=format(Sys.time(), "%H-%M-%OS3.png")
+            )), after=0)
+          }
+          breakLoop <- TRUE
           break()
         }
       }
@@ -145,18 +154,36 @@ optimize <- function(nodes, dist, actualRoute) {
   return(list(distance=minDistance, route=route, trackDistance=trackDistance, plot=plot))
 }
 
-start_time <- Sys.time()
-# Load nodes from file
-nodes <- read.csv(file="coords.csv", header=FALSE, sep="\t")
-nodes <- data.table(nodes)
-nodes <- nodes[,index:=c(1:nrow(nodes))]
+main <- function() {
+  startTime <- Sys.time()
+  # Load nodes from file
+  nodes <- read.csv(file="coords.csv", header=FALSE, sep="\t")
+  nodes <- data.table(nodes)
+  nodes <- nodes[,index:=c(1:nrow(nodes))]
+  
+  # Load distances from file
+  dist <- read.csv(file="dist.csv", header=FALSE, sep="\t")
+  dist <- as.matrix(dist)
+  
+  result <- findNearest(nodes, dist)
+  result <- optimize(nodes, dist, result)
+  endTime <- Sys.time()
+  
+  printResult(resultInfo=result, stime=startTime, etime=endTime)
+  
+  if (exportPlots) {
+    startTime <- Sys.time()
+    for(i in 1:(length(plotsRecord))) {
+      plotNodes(
+        route=plotsRecord[[i]]$route,
+        nodes=plotsRecord[[i]]$nodes,
+        distanceValue=plotsRecord[[i]]$distanceValue,
+        filename=plotsRecord[[i]]$filename
+      )
+    }
+    endTime <- Sys.time()
+    print(paste("Plots generation time:", (endTime - startTime), sep=" "))
+  }
+}
 
-# Load distances from file
-dist <- read.csv(file="dist.csv", header=FALSE, sep="\t")
-dist <- as.matrix(dist)
-
-result <- findNearest(nodes, dist)
-result <- optimize(nodes, dist, result)
-end_time <- Sys.time()
-
-printResult(resultInfo=result, stime=start_time, etime=end_time)
+main()
