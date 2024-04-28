@@ -5,6 +5,7 @@ library(ggplot2)
 # Project Settings
 dir <- "~/universidad/analisis/"
 setwd(dir)
+dataset <- 25
 exportPlots <- TRUE
 plotsRecord <- list()
 
@@ -23,12 +24,12 @@ plotNodes <- function(route, nodes, distanceValue=Inf, filename="plot.png") {
   # Plot route lines
   plot <- plot + geom_segment(aes(xend=c(tail(V1, n=-1), NA), yend=c(tail(V2, n=-1), NA)), na.rm = TRUE)
   # Add distance of the route
-  plot <- plot + ggtitle(paste("Distance:", distance_value, sep=" "))
+  plot <- plot + ggtitle(paste("Distance:", distanceValue, sep=" "))
   
   # Save plot to file
   if (exportPlots) {
-    filename <- format(Sys.time(), "results/300/%H-%M-%OS3.png")
-    ggsave(filename)
+    filepath <- sprintf("results/%s/%s", dataset, filename)
+    ggsave(filepath)
   }
   
   # Return plot
@@ -45,10 +46,34 @@ routeDistance <- function(dist, route) {
 }
 
 # Print Result
-printResult <- function(resultInfo, stime, etime) {
-  print(paste("Running time:", (etime - stime), sep=" "))
-  print(paste("Distance:", result$distance, sep=" "))
-  print(paste("Route:", paste(result$route, collapse=" -> "), sep=" "))
+printResult <- function(result, startTime, endTime) {
+  # Create dataset results directory if doesn't exists
+  dir.create(sprintf("results/%s/", dataset), showWarnings = FALSE)
+  
+  timeDifference <- (endTime - startTime)
+  
+  # Print the data to a file
+  sink(sprintf("results/%s/result.txt", dataset))
+  print(sprintf("Running time: %.5f %s", timeDifference, units(timeDifference)))
+  print(sprintf("Distance: %.5f", result$distance))
+  print(sprintf("Route: %s", paste(result$route, collapse=" -> ")))
+  
+  if (exportPlots) {
+    startTime <- Sys.time()
+    for(i in 1:(length(plotsRecord))) {
+      plotNodes(
+        route=plotsRecord[[i]]$route,
+        nodes=plotsRecord[[i]]$nodes,
+        distanceValue=plotsRecord[[i]]$distanceValue,
+        filename=plotsRecord[[i]]$filename
+      )
+    }
+    endTime <- Sys.time()
+    timeDifference <- (endTime - startTime)
+    print(sprintf("Plots generation time: %.5f %s", timeDifference, units(timeDifference)))
+  }
+  
+  sink()
 }
 
 # Order route
@@ -161,33 +186,19 @@ optimize <- function(nodes, dist, actualRoute) {
 main <- function() {
   startTime <- Sys.time()
   # Load nodes from file
-  nodes <- read.csv(file="coords.csv", header=FALSE, sep="\t")
+  nodes <- read.csv(file=sprintf("data/%s/nodes.csv", dataset), header=FALSE, sep="\t")
   nodes <- data.table(nodes)
   nodes <- nodes[,index:=c(1:nrow(nodes))]
   
   # Load distances from file
-  dist <- read.csv(file="dist.csv", header=FALSE, sep="\t")
+  dist <- read.csv(file=sprintf("data/%s/dist.csv", dataset), header=FALSE, sep="\t")
   dist <- as.matrix(dist)
   
   result <- findNearest(nodes, dist)
   result <- optimize(nodes, dist, result)
   endTime <- Sys.time()
   
-  printResult(resultInfo=result, stime=startTime, etime=endTime)
-  
-  if (exportPlots) {
-    startTime <- Sys.time()
-    for(i in 1:(length(plotsRecord))) {
-      plotNodes(
-        route=plotsRecord[[i]]$route,
-        nodes=plotsRecord[[i]]$nodes,
-        distanceValue=plotsRecord[[i]]$distanceValue,
-        filename=plotsRecord[[i]]$filename
-      )
-    }
-    endTime <- Sys.time()
-    print(paste("Plots generation time:", (endTime - startTime), sep=" "))
-  }
+  printResult(result=result, startTime=startTime, endTime=endTime)
 }
 
 main()
