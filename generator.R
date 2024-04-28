@@ -10,9 +10,12 @@ createNodes <- function(n = 20) {
   return(nodes)
 }
 
+saveNodes <- function() {
+  dir.create(sprintf("data/%s/", n), showWarnings = FALSE)
+  write.csv(nodes, sprintf("data/%s/nodes.csv", n), row.names = FALSE, col.names = FALSE, sep="\t")
+  write.csv(dist, sprintf("data/%s/dist.csv", n), row.names = FALSE, col.names = FALSE, sep="\t")
+}
+
 nodes <- createNodes(n=n)
 dist <- as.matrix(dist(nodes))
-
-dir.create(sprintf("data/%s/", n), showWarnings = FALSE)
-write.csv(nodes, sprintf("data/%s/nodes.csv", n), row.names = FALSE, col.names = FALSE, sep="\t")
-write.csv(dist, sprintf("data/%s/dist.csv", n), row.names = FALSE, col.names = FALSE, sep="\t")
+saveNodes()
