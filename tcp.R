@@ -23,9 +23,13 @@ plotNodes <- function(route, nodes, distanceValue=Inf, filename="plot.png") {
   # Plot route lines
   plot <- plot + geom_segment(aes(xend=c(tail(V1, n=-1), NA), yend=c(tail(V2, n=-1), NA)), na.rm = TRUE)
   # Add distance of the route
-  plot <- plot + ggtitle(paste("Distance:", distanceValue, sep=" "))
-
-  ggsave(filename)
+  plot <- plot + ggtitle(paste("Distance:", distance_value, sep=" "))
+  
+  # Save plot to file
+  if (exportPlots) {
+    filename <- format(Sys.time(), "results/300/%H-%M-%OS3.png")
+    ggsave(filename)
+  }
   
   # Return plot
   return(plot)
