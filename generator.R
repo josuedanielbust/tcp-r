@@ -12,8 +12,8 @@ createNodes <- function(n = 20) {
 
 saveNodes <- function() {
   dir.create(sprintf("data/%s/", n), showWarnings = FALSE)
-  write.csv(nodes, sprintf("data/%s/nodes.csv", n), row.names = FALSE, col.names = FALSE, sep="\t")
-  write.csv(dist, sprintf("data/%s/dist.csv", n), row.names = FALSE, col.names = FALSE, sep="\t")
+  write.table(nodes, sprintf("data/%s/nodes.csv", n), row.names = FALSE, col.names = FALSE, sep="\t")
+  write.table(dist, sprintf("data/%s/dist.csv", n), row.names = FALSE, col.names = FALSE, sep="\t")
 }
 
 nodes <- createNodes(n=n)

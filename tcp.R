@@ -174,10 +174,11 @@ optimize <- function(nodes, dist, actualRoute) {
     trackDistance <- c(trackDistance, minDistance)
     
     # Validate optimization
-    if(previousDistance == newDistance) {
-      maxTimes <- maxTimes + 1
-      if (maxTimes > 10) break()
-    }
+    if ((i/n) > (1/exp(1))) { break() }
+    # if(previousDistance == newDistance) {
+    #   maxTimes <- maxTimes + 1
+    #   if (maxTimes > 10) break()
+    # }
   }
   
   return(list(distance=minDistance, route=route, trackDistance=trackDistance, plot=plot))
