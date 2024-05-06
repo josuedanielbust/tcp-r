@@ -87,7 +87,7 @@ orderRoute <- function(route, nodes) {
 }
 
 # Algorithm
-findNearest <- function(nodes, dist) {
+findRouteByNearest <- function(nodes, dist) {
   # Start route on first node
   currentNode <- as.numeric(rownames(nodes)[1])
   route <- c(currentNode)
@@ -120,14 +120,14 @@ findNearest <- function(nodes, dist) {
   return(list(distance=distanceValue, route=route, plot=plot))
 }
 
-swap <- function(route, i, j) {
+swapNodes <- function(route, i, j) {
   newRoute <- route[1:(i-1)]
   newRoute <- c(newRoute, route[j:(i)])
   newRoute <- c(newRoute, route[(j+1):length(route)])
   return(newRoute)
 }
 
-optimize <- function(nodes, dist, actualRoute) {
+optimizeRoute <- function(nodes, dist, actualRoute) {
   # Control Variables
   maxTimes <- 0
   bestRoute <- actualRoute$route
@@ -145,7 +145,7 @@ optimize <- function(nodes, dist, actualRoute) {
     for(i in 2:(nrow(nodes)-1)) {
       for(j in (i+1):(nrow(nodes)-1)) {
         # Swap
-        route <- swap(route=bestRoute, i=i, j=j)
+        route <- swapNodes(route=bestRoute, i=i, j=j)
         newDistance <- routeDistance(dist, route)
         
         # Update distance and plot
@@ -174,7 +174,8 @@ optimize <- function(nodes, dist, actualRoute) {
     trackDistance <- c(trackDistance, minDistance)
     
     # Validate optimization
-    if ((i/n) > (1/exp(1))) { break() }
+    # Using probability and the Secretary Problem, 1/e ~= 37%
+    if ((i/nrow(nodes)) > (1/exp(1))) { break() }
     # if(previousDistance == newDistance) {
     #   maxTimes <- maxTimes + 1
     #   if (maxTimes > 10) break()
@@ -186,6 +187,9 @@ optimize <- function(nodes, dist, actualRoute) {
 
 main <- function() {
   startTime <- Sys.time()
+  # Reset plots records
+  plotsRecord <- list()
+  
   # Load nodes from file
   nodes <- read.csv(file=sprintf("data/%s/nodes.csv", dataset), header=FALSE, sep="\t")
   nodes <- data.table(nodes)
@@ -195,8 +199,8 @@ main <- function() {
   dist <- read.csv(file=sprintf("data/%s/dist.csv", dataset), header=FALSE, sep="\t")
   dist <- as.matrix(dist)
   
-  result <- findNearest(nodes, dist)
-  result <- optimize(nodes, dist, result)
+  result <- findRouteByNearest(nodes, dist)
+  result <- optimizeRoute(nodes, dist, result)
   endTime <- Sys.time()
   
   printResult(result=result, startTime=startTime, endTime=endTime)
