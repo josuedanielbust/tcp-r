@@ -127,9 +127,8 @@ swapNodes <- function(route, i, j) {
   return(newRoute)
 }
 
-optimizeRoute <- function(nodes, dist, actualRoute) {
+optimizeRoute <- function(nodes, dist, actualRoute, startTime) {
   # Control Variables
-  maxTimes <- 0
   bestRoute <- actualRoute$route
   minDistance <- actualRoute$distance
   
@@ -150,7 +149,6 @@ optimizeRoute <- function(nodes, dist, actualRoute) {
         
         # Update distance and plot
         if(newDistance < minDistance) {
-          maxTimes <- 0
           minDistance <- newDistance
           bestRoute <- route
           
@@ -176,10 +174,10 @@ optimizeRoute <- function(nodes, dist, actualRoute) {
     # Validate optimization
     # Using probability and the Secretary Problem, 1/e ~= 37%
     if ((i/nrow(nodes)) > (1/exp(1))) { break() }
-    # if(previousDistance == newDistance) {
-    #   maxTimes <- maxTimes + 1
-    #   if (maxTimes > 10) break()
-    # }
+    
+    actualTime <- Sys.time()
+    elapsedTime <- difftime(actualTime, startTime, units="secs")
+    if (elapsedTime > 100) { break() }
   }
   
   return(list(distance=minDistance, route=route, trackDistance=trackDistance, plot=plot))
@@ -200,7 +198,7 @@ main <- function() {
   dist <- as.matrix(dist)
   
   result <- findRouteByNearest(nodes, dist)
-  result <- optimizeRoute(nodes, dist, result)
+  result <- optimizeRoute(nodes, dist, result, startTime)
   endTime <- Sys.time()
   
   printResult(result=result, startTime=startTime, endTime=endTime)
