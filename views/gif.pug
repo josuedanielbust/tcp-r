@@ -1,0 +1,17 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title GIF for #{id}
+  body
+    section(style="display: flex; flex-direction: row; align-items: center;")
+      div(style="flex: 0 0 50%;")
+        img(src=gif, alt=id, style="max-width: 100%;")
+      div(style="flex: 0 0 50%;")
+        h1 GIF for #{id}
+        each val in data
+          p
+            span
+              strong #{val[0]}: 
+            span #{val[1]}

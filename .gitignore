@@ -3,3 +3,4 @@
 .Rhistory
 
 *.png
+node_modules/

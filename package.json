@@ -1,0 +1,15 @@
+{
+  "name": "analisis",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:josuedanielbust/tcp-r.git",
+  "author": "Josue Bustamante <josuedanielbustamante@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "express": "^4.19.2",
+    "gif-encoder-2": "^1.0.5",
+    "pug": "^3.0.2",
+    "r-integration": "^2.4.0"
+  }
+}
